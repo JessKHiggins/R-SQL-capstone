@@ -1,3 +1,10 @@
+#Fork this repo to your own GitHub account CHECK
+#Clone your copy of the repo to your local machine CHECK
+#Modify the R script plot_species_by_weight.R according to the comments in the script. Push your changes to GitHub.
+#Modify the bash script run_R_analyses.sh to run the R script for each year (you can change the list of years, too)
+#Run the analyses using the bash script
+
+
 # extracts species and weights for a given year from portal rodent 
 # database; makes a fancy plot and saves the plot to a file
 
@@ -16,7 +23,7 @@ print(paste("Getting data for year",year))
 
 # create a connection to the database
 # 
-myDB <- "~/Desktop/swc_unc_sql/portal_project.sqlite"
+myDB <- "~/Desktop/1314459/mammals_2.sqlite"
 conn <- dbConnect(drv = SQLite(), dbname= myDB)
 
 # some database functions for listing tables and fields
@@ -24,17 +31,26 @@ dbListTables(conn)
 dbListFields(conn,"surveys")
 
 # constructing a query
-query_string <- "SELECT count(*) FROM surveys"
-dbGetQuery(conn,query_string)
+query_string <- paste(
+  "SELECT weight,year,species_id
+  FROM surveys
+  WHERE weight IS NOT NULL AND year=",year, ';', sep="")
+
+result<-dbGetQuery(conn,query_string)
 head(result)
 
 # write a query that gets the non-null weights for 
 # all species in this year
-query_string <- ""
-result <- dbGetQuery(conn,query_string)
+query_string <- paste(
+  "SELECT weight,year,species_id
+  FROM surveys
+  WHERE weight IS NOT NULL AND year=",year, ';', sep="")
+
+result<-dbGetQuery(conn,query_string)
 head(result)
 
 # plot the data and save to a png file
-ggplot()
-outputfilename <- ".png"
-ggsave(outputfilename)
+ggplot(data=result, aes(x=species_id, y=weight))+
+  geom_boxplot()+theme_classic()+xlab("Species ID")+ylab("Weight (g)")
+outputfilename <- paste("spp_weight",year,".png", sep="")
+ggsave(outputfilename, width=5, height=5, units="in" )
